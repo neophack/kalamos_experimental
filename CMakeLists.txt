@@ -26,4 +26,15 @@ target_link_libraries(hello ${OpenCV_LIBS})
 # frameL
 add_executable(frameL frameL.cpp)
 target_link_libraries(frameL ${OpenCV_LIBS} ${KALAMOS_CONTEXT_LIBRARIES})
-
+# sgbm
+add_executable(sgbm sgbm.cpp)
+target_link_libraries(sgbm ${OpenCV_LIBS} ${KALAMOS_CONTEXT_LIBRARIES})
+# calibrate
+#add_executable(calibrate calibrate.cpp)
+#target_link_libraries(calibrate ${OpenCV_LIBS} ${KALAMOS_CONTEXT_LIBRARIES})
+# kalamoscapture
+add_library(kalamoscapture STATIC kalamoscapture.cpp)
+target_link_libraries(kalamoscapture ${OpenCV_LIBS} ${KALAMOS_CONTEXT_LIBRARIES})
+# kalamoscapture_demo
+add_executable(kalamoscapture_demo kalamoscapture_demo.cpp)
+target_link_libraries(kalamoscapture_demo kalamoscapture ${OpenCV_LIBS} ${KALAMOS_CONTEXT_LIBRARIES})
