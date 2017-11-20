@@ -38,6 +38,9 @@ target_link_libraries(kalamoscapture_demo kalamoscapture ${OpenCV_LIBS} ${KALAMO
 # sgbm_demo
 add_executable(sgbm_demo sgbm.cpp)
 target_link_libraries(sgbm_demo kalamoscapture ${OpenCV_LIBS} ${KALAMOS_CONTEXT_LIBRARIES})
+# flow_demo
+add_executable(flow_demo flow.cpp)
+target_link_libraries(flow_demo kalamoscapture ${OpenCV_LIBS} ${KALAMOS_CONTEXT_LIBRARIES})
 # calibration_images
 add_executable(calibration_images calibration_images.cpp)
 target_link_libraries(calibration_images kalamoscapture ${OpenCV_LIBS} ${KALAMOS_CONTEXT_LIBRARIES})
