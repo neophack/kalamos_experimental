@@ -20,8 +20,8 @@ int main(int argc, char** argv) {
 
 	// Initialize SGBM
 	cv::StereoSGBM sgbm;
-	sgbm.SADWindowSize = 1;
-	sgbm.numberOfDisparities = 32;
+	sgbm.SADWindowSize = 3;
+	sgbm.numberOfDisparities = 48;
 	sgbm.P1 = 8 * 1 * sgbm.SADWindowSize * sgbm.SADWindowSize; // https://docs.opencv.org/3.3.0/d1/d9f/classcv_1_1stereo_1_1StereoBinarySGBM.html
 	sgbm.P2 = 128 * 1 * sgbm.SADWindowSize * sgbm.SADWindowSize;
 
@@ -47,12 +47,15 @@ int main(int argc, char** argv) {
 			cv::minMaxIdx(disp, &min, &max);
 //			cerr << "min/16 = " << min / 16.0 << ", max/16 = " << max / 16.0
 //					<< endl;
-			cv::convertScaleAbs(disp, disp_col, 255 / (max - min));
+			cv::convertScaleAbs(disp, disp_col,
+					-255.0 / (16 * sgbm.numberOfDisparities), 255);
 //			disp.convertTo(disp_col, CV_8UC1, 255.0 / (64 * 16), 0);
-			cv::applyColorMap(disp_col, disp_col, cv::COLORMAP_COOL);
+			cv::applyColorMap(disp_col, disp_col, cv::COLORMAP_RAINBOW);
 
+			const double gray_weight = 100;
 			cv::cvtColor(left, left, CV_GRAY2BGR);
-			cv::convertScaleAbs(left, left, 55.0 / 255, 200);
+			cv::convertScaleAbs(left, left, gray_weight / 255,
+					255 - gray_weight);
 			cv::multiply(disp_col, left, disp_col, 1.0 / 255);
 			cv::imshow("Disparity", disp_col);
 //			cv::imshow("Left", left);
