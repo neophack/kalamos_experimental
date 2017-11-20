@@ -44,7 +44,9 @@ int main(int argc, char** argv) {
 			cv::resize(left, left, cv::Size(0, 0), 0.25, 0.25,
 					cv::INTER_NEAREST);
 			if (!left_prev.empty()) {
-				of->calc(left_prev, left, flow);
+//				of->calc(left_prev, left, flow);
+				cv::calcOpticalFlowFarneback(left_prev, left, flow, 0.5, 3, 15,
+						3, 5, 1.2, 0);
 				// OF rendering code from https://stackoverflow.com/questions/7693561/opencv-displaying-a-2-channel-image-optical-flow
 				//extraxt x and y channels
 				cv::Mat xy[2]; //X,Y
