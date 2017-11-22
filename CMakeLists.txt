@@ -38,3 +38,9 @@ target_link_libraries(kalamoscapture ${OpenCV_LIBS} ${KALAMOS_CONTEXT_LIBRARIES}
 # kalamoscapture_demo
 add_executable(kalamoscapture_demo kalamoscapture_demo.cpp)
 target_link_libraries(kalamoscapture_demo kalamoscapture ${OpenCV_LIBS} ${KALAMOS_CONTEXT_LIBRARIES})
+# calibration_images
+add_executable(calibration_images calibration_images.cpp)
+target_link_libraries(calibration_images kalamoscapture ${OpenCV_LIBS} ${KALAMOS_CONTEXT_LIBRARIES})
+# calibrate_fisheye_stereo
+add_executable(calibrate_fisheye_stereo calibrate_fisheye_stereo.cpp)
+target_link_libraries(calibrate_fisheye_stereo ${OpenCV_LIBS})
