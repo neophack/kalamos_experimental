@@ -21,9 +21,13 @@ int main(int argc, char** argv) {
 	// Initialize SGBM
 	cv::StereoSGBM sgbm;
 	sgbm.SADWindowSize = 3;
-	sgbm.numberOfDisparities = 48;
+	sgbm.numberOfDisparities = 32;
 	sgbm.P1 = 8 * 1 * sgbm.SADWindowSize * sgbm.SADWindowSize; // https://docs.opencv.org/3.3.0/d1/d9f/classcv_1_1stereo_1_1StereoBinarySGBM.html
-	sgbm.P2 = 128 * 1 * sgbm.SADWindowSize * sgbm.SADWindowSize;
+	sgbm.P2 = 32 * 1 * sgbm.SADWindowSize * sgbm.SADWindowSize;
+	sgbm.uniquenessRatio = 10;
+	sgbm.speckleWindowSize = 100;
+	sgbm.speckleRange = 2;
+	sgbm.fullDP = false;
 
 	// Capture and compute stereo
 	cv::Mat left, right;
@@ -48,9 +52,9 @@ int main(int argc, char** argv) {
 //			cerr << "min/16 = " << min / 16.0 << ", max/16 = " << max / 16.0
 //					<< endl;
 			cv::convertScaleAbs(disp, disp_col,
-					-255.0 / (16 * sgbm.numberOfDisparities), 255);
+					255.0 / (16 * sgbm.numberOfDisparities), 0);
 //			disp.convertTo(disp_col, CV_8UC1, 255.0 / (64 * 16), 0);
-			cv::applyColorMap(disp_col, disp_col, cv::COLORMAP_RAINBOW);
+			cv::applyColorMap(disp_col, disp_col, cv::COLORMAP_JET);
 
 			const double gray_weight = 100;
 			cv::cvtColor(left, left, CV_GRAY2BGR);
