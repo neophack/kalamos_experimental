@@ -5,6 +5,7 @@
 #include <iostream>
 #include <thread>
 #include <mutex>
+#include <condition_variable>
 #include <cstdint>
 
 using namespace std;
@@ -14,19 +15,23 @@ static unique_ptr<kalamos::Context> context;
 static unique_ptr<kalamos::ServiceHandle> capturehandle;
 static thread kalamos_thread;
 
-// Current frames
-static mutex mutex_frame;
+// Frame grabbing
+static mutex frame_mutex;
+static condition_variable frame_cv;
+static bool should_grab = false;
 static cv::Mat current_frame[KalamosChannel::size];
 static uint64_t current_ts;
-// Grabbed frames
-static cv::Mat grabbed_frame[KalamosChannel::size];
 
 static void onStereoYuv(kalamos::StereoYuvData const &data) {
-	mutex_frame.lock();
-	data.leftYuv[0]->copyTo(current_frame[KalamosChannel::LEFT]);
-	data.rightYuv[0]->copyTo(current_frame[KalamosChannel::RIGHT]);
-	current_ts = data.ts;
-	mutex_frame.unlock();
+	unique_lock<mutex> lk(frame_mutex);
+	if (should_grab) {
+		data.leftYuv[0]->copyTo(current_frame[KalamosChannel::LEFT]);
+		data.rightYuv[0]->copyTo(current_frame[KalamosChannel::RIGHT]);
+		current_ts = data.ts;
+		should_grab = false;
+		lk.unlock();
+		frame_cv.notify_all();
+	}
 }
 
 static void kalamosThread(void) {
@@ -88,16 +93,12 @@ bool KalamosCapture::grab() {
 	if (!isOpened()) {
 		return false;
 	}
-	bool success = true;
-	mutex_frame.lock();
-	for (int i = 0; i < KalamosChannel::size; i++) {
-		current_frame[i].copyTo(grabbed_frame[i]);
-		if (grabbed_frame[i].empty()) {
-			success = false;
-		}
+	unique_lock<mutex> lk(frame_mutex);
+	should_grab = true;
+	while (should_grab) {
+		frame_cv.wait(lk);
 	}
-	mutex_frame.unlock();
-	return success;
+	return true;
 }
 
 /**
@@ -107,9 +108,10 @@ bool KalamosCapture::grab() {
  * @return
  */
 bool KalamosCapture::retrieve(cv::Mat& image, int channel) {
+	unique_lock<mutex> lk(frame_mutex);
 	if (channel >= 0 && channel < KalamosChannel::size &&
-			!grabbed_frame[0].empty()) {
-		grabbed_frame[channel].copyTo(image);
+			!current_frame[0].empty()) {
+		current_frame[channel].copyTo(image);
 		return true;
 	}
 	return false;
@@ -120,5 +122,15 @@ bool KalamosCapture::set(int propId, double value) {
 }
 
 double KalamosCapture::get(int propId) {
-	return 0.0; // Not supported
+	double value = 0.0;
+	switch (propId) {
+	case CV_CAP_PROP_POS_MSEC:
+		frame_mutex.lock();
+		value = current_ts / 1.0e6;
+		frame_mutex.unlock();
+		break;
+	default:
+		break;
+	}
+	return value;
 }
