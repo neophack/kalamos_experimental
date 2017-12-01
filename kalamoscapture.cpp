@@ -129,6 +129,47 @@ double KalamosCapture::get(int propId) {
 		value = current_ts / 1.0e6;
 		frame_mutex.unlock();
 		break;
+
+	case CV_CAP_PROP_FRAME_WIDTH:
+		switch (context->options().videoMode) {
+		case kalamos::VideoMode::MODE_1280_960_30:
+			value = 1280;
+			break;
+		case kalamos::VideoMode::MODE_1500_1500_30:
+			value = 1500;
+			break;
+		case kalamos::VideoMode::MODE_1500_1500_60:
+			value = 1500;
+			break;
+		case kalamos::VideoMode::MODE_900_700_120:
+			value = 900;
+			break;
+		default:
+			cerr << "Unknown video mode '" << (int)context->options().videoMode
+					<< "'!" << endl;
+			break;
+		}
+
+	case CV_CAP_PROP_FRAME_HEIGHT:
+		switch (context->options().videoMode) {
+		case kalamos::VideoMode::MODE_1280_960_30:
+			value = 960;
+			break;
+		case kalamos::VideoMode::MODE_1500_1500_30:
+			value = 1500;
+			break;
+		case kalamos::VideoMode::MODE_1500_1500_60:
+			value = 1500;
+			break;
+		case kalamos::VideoMode::MODE_900_700_120:
+			value = 700;
+			break;
+		default:
+			cerr << "Unknown video mode '" << (int)context->options().videoMode
+					<< "'!" << endl;
+			break;
+		}
+
 	default:
 		break;
 	}
