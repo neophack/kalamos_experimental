@@ -3,6 +3,7 @@
 
 #include <unistd.h>
 #include <opencv2/opencv.hpp>
+#include <opencv2/gpu/gpu.hpp>
 
 int main(int argc, char** argv) {
 	// Check that user is root
@@ -18,12 +19,17 @@ int main(int argc, char** argv) {
 			<< endl;
 	KalamosRectify rect(image_size);
 
-	// Initialize SGBM
-	cv::StereoSGBM sgbm;
-	sgbm.SADWindowSize = 1;
-	sgbm.numberOfDisparities = 32;
-	sgbm.P1 = 8 * 1 * sgbm.SADWindowSize * sgbm.SADWindowSize; // https://docs.opencv.org/3.3.0/d1/d9f/classcv_1_1stereo_1_1StereoBinarySGBM.html
-	sgbm.P2 = 128 * 1 * sgbm.SADWindowSize * sgbm.SADWindowSize;
+//	// Initialize SGBM
+//	cv::StereoSGBM sgbm;
+//	sgbm.SADWindowSize = 1;
+//	sgbm.numberOfDisparities = 32;
+//	sgbm.P1 = 8 * 1 * sgbm.SADWindowSize * sgbm.SADWindowSize; // https://docs.opencv.org/3.3.0/d1/d9f/classcv_1_1stereo_1_1StereoBinarySGBM.html
+//	sgbm.P2 = 128 * 1 * sgbm.SADWindowSize * sgbm.SADWindowSize;
+
+// Initialize GPU BP
+	cv::gpu::StereoBeliefPropagation bp; // HACK
+	bp.estimateRecommendedParams(image_size.width / 4, image_size.height / 4,
+			bp.ndisp, bp.iters, bp.levels);
 
 	// Capture and compute stereo
 	cv::Mat left, right;
@@ -39,7 +45,11 @@ int main(int argc, char** argv) {
 			cv::resize(right, right, cv::Size(0, 0), 0.25, 0.25,
 					cv::INTER_NEAREST);
 			// Calculate disparity
-			sgbm(left, right, disp);
+			cv::gpu::GpuMat gpu_left(left), gpu_right(right), gpu_disp;
+			bp(gpu_left, gpu_right, gpu_disp);
+			gpu_left.download(left);
+			gpu_right.download(right);
+			gpu_disp.download(disp);
 			// Show result
 			cv::Mat disp_col;
 
