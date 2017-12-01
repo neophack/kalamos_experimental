@@ -20,9 +20,10 @@ int main(int argc, char** argv) {
 
 	// Initialize SGBM
 	cv::StereoSGBM sgbm;
-	sgbm.numberOfDisparities = 64;
-	sgbm.P1 = 200;
-	sgbm.P2 = 1600;
+	sgbm.SADWindowSize = 1;
+	sgbm.numberOfDisparities = 32;
+	sgbm.P1 = 8 * 1 * sgbm.SADWindowSize * sgbm.SADWindowSize; // https://docs.opencv.org/3.3.0/d1/d9f/classcv_1_1stereo_1_1StereoBinarySGBM.html
+	sgbm.P2 = 128 * 1 * sgbm.SADWindowSize * sgbm.SADWindowSize;
 
 	// Capture and compute stereo
 	cv::Mat left, right;
@@ -44,6 +45,8 @@ int main(int argc, char** argv) {
 
 			double min, max;
 			cv::minMaxIdx(disp, &min, &max);
+//			cerr << "min/16 = " << min / 16.0 << ", max/16 = " << max / 16.0
+//					<< endl;
 			cv::convertScaleAbs(disp, disp_col, 255 / (max - min));
 //			disp.convertTo(disp_col, CV_8UC1, 255.0 / (64 * 16), 0);
 			cv::applyColorMap(disp_col, disp_col, cv::COLORMAP_COOL);
