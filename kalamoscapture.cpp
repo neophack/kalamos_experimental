@@ -149,6 +149,7 @@ double KalamosCapture::get(int propId) {
 					<< "'!" << endl;
 			break;
 		}
+		break;
 
 	case CV_CAP_PROP_FRAME_HEIGHT:
 		switch (context->options().videoMode) {
@@ -169,6 +170,7 @@ double KalamosCapture::get(int propId) {
 					<< "'!" << endl;
 			break;
 		}
+		break;
 
 	default:
 		break;

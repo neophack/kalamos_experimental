@@ -1,94 +1,59 @@
-// Experiment to render left frame directly from kalamos_context
+#include "kalamoscapture.hpp"
+#include "kalamosrectify.hpp"
 
-#include <kalamos_context.hpp>
-
-#include <opencv2/opencv.hpp>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/highgui/highgui.hpp>
-
-#include <iostream>
 #include <unistd.h>
+#include <opencv2/opencv.hpp>
 
-using namespace kalamos;
-using namespace cv;
-
-StereoSGBM sgbm;
-
-static void onStereoYuv(StereoYuvData const &data) {
-//	std::cout << "stereo" << std::endl;
-//	std::cout << data.leftYuv[0]->size();
-
-//	imshow("Disparity", *data.leftYuv[0]);
-//	waitKey(1);
-//	return;
-
-// Shrink input images
-	std::cout << "Shrink images... ";
-	Mat left_small, right_small;
-	resize(*data.leftYuv[0], left_small, Size(), 0.25, 0.25, INTER_NEAREST);
-	resize(*data.rightYuv[0], right_small, Size(), 0.25, 0.25, INTER_NEAREST);
-	std::cout << "ok" << std::endl;
-	// Calculate disparity
-	Mat disp;
-	std::cout << "SGBM..." << std::endl;
-	sgbm(left_small, right_small, disp);
-	std::cout << "ok" << std::endl;
-	// Show result
-	double min, max;
-	minMaxIdx(disp, &min, &max);
-	Mat coloredDisparityMap, scaledDisparityMap;
-	convertScaleAbs(disp, scaledDisparityMap, 255 / (max - min));
-	applyColorMap(scaledDisparityMap, coloredDisparityMap, COLORMAP_BONE);
-	Mat output;
-	resize(coloredDisparityMap, output, Size(), 4, 4, INTER_CUBIC);
-
-	imshow("Disparity", output);
-	waitKey(1);
-}
-
-static void kalamos_init(void) {
-	// Set up callbacks
-	Callbacks cbs;
-	cbs.stereoYuvCallback = onStereoYuv;
-	cbs.period = 1.0 / 25.0;
-	// Set up options
-	Options opt;
-	opt.videoMode = VideoMode::MODE_900_700_120;
-	// Initialize kalamos context
-	std::cout << "Initialize kalamos context..." << std::endl;
-	std::unique_ptr<Context> k_context = init(cbs, opt);
-	if (!k_context) {
-		std::cerr << "Error initializing k_context" << std::endl;
-		return;
-	}
-	std::cout << "ok" << std::endl << std::endl;
-	// Start capture service
-	std::cout << "Start capture service... " << std::endl;
-	std::unique_ptr<kalamos::ServiceHandle> captureHandle =
-			k_context->startService(ServiceType::CAPTURE);
-	std::cout << "ok" << std::endl << std::endl;
-	// Run
-	std::cout << "Run... " << std::endl;
-	k_context->run();
-	std::cout << "ok" << std::endl << std::endl;
-}
-
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
+	// Check that user is root
 	if (getuid()) {
-		std::cerr << "This program must be run as sudo!" << std::endl;
+		cerr << "This program must be run as sudo!" << std::endl;
 		return 1;
 	}
+	// Initialize video capture
+	KalamosCapture cap;
+	cv::Size image_size(cap.get(CV_CAP_PROP_FRAME_WIDTH),
+			cap.get(CV_CAP_PROP_FRAME_HEIGHT));
+	cerr << "Image size: " << image_size.width << " x " << image_size.height
+			<< endl;
+	KalamosRectify rect(image_size);
 
-	// Set SGBM tuning
+	// Initialize SGBM
+	cv::StereoSGBM sgbm;
 	sgbm.numberOfDisparities = 64;
 	sgbm.P1 = 200;
 	sgbm.P2 = 1600;
 
-	// Open window
-	std::cout << "Open window... " << std::endl;
-	namedWindow("Disparity");
-	std::cout << "ok" << std::endl << std::endl;
-	// Start kalamos
-	kalamos_init();
-	return 0;
+	// Capture and compute stereo
+	cv::Mat left, right;
+	cv::Mat disp;
+	int key = -1;
+	while (key != 27) {
+		if (cap.grab() && cap.retrieve(left, KalamosChannel::LEFT)
+				&& cap.retrieve(right, KalamosChannel::RIGHT)) {
+			rect.rectify(left, right, left, right);
+			// Scale down images
+			cv::resize(left, left, cv::Size(0, 0), 0.25, 0.25,
+					cv::INTER_NEAREST);
+			cv::resize(right, right, cv::Size(0, 0), 0.25, 0.25,
+					cv::INTER_NEAREST);
+			// Calculate disparity
+			sgbm(left, right, disp);
+			// Show result
+			cv::Mat disp_col;
+
+			double min, max;
+			cv::minMaxIdx(disp, &min, &max);
+			cv::convertScaleAbs(disp, disp_col, 255 / (max - min));
+//			disp.convertTo(disp_col, CV_8UC1, 255.0 / (64 * 16), 0);
+			cv::applyColorMap(disp_col, disp_col, cv::COLORMAP_COOL);
+
+			cv::cvtColor(left, left, CV_GRAY2BGR);
+			cv::convertScaleAbs(left, left, 55.0 / 255, 200);
+			cv::multiply(disp_col, left, disp_col, 1.0 / 255);
+			cv::imshow("Disparity", disp_col);
+//			cv::imshow("Left", left);
+		}
+		key = (cv::waitKey(1) & 0xFF);
+	}
 }
