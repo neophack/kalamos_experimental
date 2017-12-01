@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
 
 	// Calibrate
 	cerr << "Calibrating... ";
-	cv::Matx33d K1, K2, R;
+	cv::Mat K1, K2, R;
 	cv::Vec3d T;
 	cv::Vec4d D1, D2;
 	cv::fisheye::stereoCalibrate(object_points, left_image_points,
@@ -116,16 +116,6 @@ int main(int argc, char **argv) {
 	cerr << "R:" << endl << R << endl;
 	cerr << "T:" << endl << T << endl;
 
-	cerr << "Saving results... ";
-	cv::FileStorage fs(string(argv[1]) + "calib.yml", cv::FileStorage::WRITE);
-	fs << "K1" << cv::Mat(K1);
-	fs << "D1" << D1;
-	fs << "K2" << cv::Mat(K2);
-	fs << "D2" << D2;
-	fs << "R" << cv::Mat(R);
-	fs << "T" << T;
-	cerr << "ok" << endl;
-
 	// Rectify
 	cerr << "Rectification... ";
 	cv::Mat R1, P1, R2, P2, Q;
@@ -139,13 +129,29 @@ int main(int argc, char **argv) {
 	cerr << "P2" << endl << P2 << endl;
 	cerr << "Q" << endl << Q << endl;
 
+	// Save calibration results
 	cerr << "Saving results... ";
-	cv::FileStorage fs2(string(argv[1]) + "rect.yml", cv::FileStorage::WRITE);
-	fs2 << "R1" << R1;
-	fs2 << "P1" << P1;
-	fs2 << "R2" << R2;
-	fs2 << "P2" << P2;
-	fs2 << "Q" << Q;
+	cv::Mat M1, M2;
+	K1.copyTo(M1);
+	M1.at<double>(0, 2) -= image_size.width / 2;
+	M1.at<double>(1, 2) -= image_size.height / 2;
+	K2.copyTo(M2);
+	M2.at<double>(0, 2) -= image_size.width / 2;
+	M2.at<double>(1, 2) -= image_size.height / 2;
+	cv::FileStorage fs;
+	fs.open(string(argv[1]) + "intrinsics.yml", cv::FileStorage::WRITE);
+	fs << "M1" << M1;
+	fs << "M2" << M2;
+	fs << "D1" << D1;
+	fs << "D2" << D2;
+	fs.release();
+
+	fs.open(string(argv[1]) + "extrinsics.yml", cv::FileStorage::WRITE);
+	fs << "R1" << R1;
+	fs << "R2" << R2;
+	fs << "R" << R;
+	fs << "T" << T;
+	fs.release();
 	cerr << "ok" << endl;
 
 	// Show results
