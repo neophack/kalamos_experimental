@@ -33,14 +33,11 @@ target_link_libraries(sgbm ${OpenCV_LIBS} ${KALAMOS_CONTEXT_LIBRARIES})
 #add_executable(calibrate calibrate.cpp)
 #target_link_libraries(calibrate ${OpenCV_LIBS} ${KALAMOS_CONTEXT_LIBRARIES})
 # kalamoscapture
-add_library(kalamoscapture STATIC kalamoscapture.cpp rectifiedkalamoscapture.cpp)
+add_library(kalamoscapture STATIC kalamoscapture.cpp kalamosrectify.cpp)
 target_link_libraries(kalamoscapture ${OpenCV_LIBS} ${KALAMOS_CONTEXT_LIBRARIES})
 # kalamoscapture_demo
 add_executable(kalamoscapture_demo kalamoscapture_demo.cpp)
 target_link_libraries(kalamoscapture_demo kalamoscapture ${OpenCV_LIBS} ${KALAMOS_CONTEXT_LIBRARIES})
-# rectifiedkalamoscapture_demo
-add_executable(rectifiedkalamoscapture_demo rectifiedkalamoscapture_demo.cpp)
-target_link_libraries(rectifiedkalamoscapture_demo kalamoscapture ${OpenCV_LIBS} ${KALAMOS_CONTEXT_LIBRARIES})
 # calibration_images
 add_executable(calibration_images calibration_images.cpp)
 target_link_libraries(calibration_images kalamoscapture ${OpenCV_LIBS} ${KALAMOS_CONTEXT_LIBRARIES})

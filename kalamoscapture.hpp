@@ -5,8 +5,6 @@
 
 #include <string>
 
-using namespace std;
-
 enum KalamosChannel {
 	LEFT,
 	RIGHT,
@@ -21,7 +19,7 @@ public:
 	KalamosCapture();
 	virtual ~KalamosCapture();
 
-	virtual bool open(const string& filename);
+	virtual bool open(const std::string& filename);
 	virtual bool open(int device);
 	virtual bool isOpened() const;
 	virtual void release();
